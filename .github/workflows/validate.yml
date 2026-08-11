@@ -1,0 +1,25 @@
+name: Validate Docker adaptation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run unit and materialization tests
+        run: python -m unittest discover -s tests -v
+      - name: Validate Compose files
+        run: |
+          docker compose config --quiet
+          docker compose -f compose.yaml -f compose.blackwell.yaml config --quiet

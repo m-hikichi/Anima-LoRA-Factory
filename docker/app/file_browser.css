@@ -1,0 +1,122 @@
+.docker-browser-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.72);
+}
+
+.docker-browser-backdrop[hidden] {
+    display: none;
+}
+
+.docker-browser {
+    width: min(720px, 100%);
+    max-height: min(680px, calc(100vh - 40px));
+    display: grid;
+    grid-template-rows: auto auto minmax(240px, 1fr) auto;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    background: #17191f;
+    color: #f4f4f5;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+}
+
+.docker-browser-header,
+.docker-browser-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px;
+}
+
+.docker-browser-header h2 {
+    margin: 0;
+    font-size: 18px;
+    letter-spacing: 0;
+}
+
+.docker-browser-footer {
+    justify-content: flex-end;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.docker-browser-icon {
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.docker-browser-icon:hover,
+.docker-browser-row:hover {
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.docker-browser-path {
+    overflow: hidden;
+    padding: 10px 16px;
+    border-block: 1px solid rgba(255, 255, 255, 0.1);
+    color: #a1a1aa;
+    font-family: monospace;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.docker-browser-list {
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.docker-browser-row {
+    width: 100%;
+    min-height: 44px;
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    border-radius: 4px;
+    padding: 8px 10px;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.docker-browser-row span:last-child {
+    overflow-wrap: anywhere;
+}
+
+.docker-browser-symbol {
+    text-align: center;
+}
+
+.docker-browser-empty,
+.docker-browser-error {
+    padding: 32px 16px;
+    color: #a1a1aa;
+    text-align: center;
+}
+
+.docker-browser-error {
+    color: #fca5a5;
+}
+
+@media (max-width: 600px) {
+    .docker-browser-backdrop {
+        padding: 8px;
+    }
+
+    .docker-browser {
+        max-height: calc(100vh - 16px);
+    }
+}
