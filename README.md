@@ -54,6 +54,21 @@ docker compose -f compose.yaml -f compose.blackwell.yaml up --build
 docker compose down
 ```
 
+## 学習画像の取得
+
+`tools/danbooru-dataset-downloader`に、Danbooru公式APIから学習画像とcaptionを取得するCLIを同梱しています。取得結果は`.env`の`DATASETS_DIR`へ直接保存されます。
+
+```powershell
+docker compose --profile tools run --rm dataset-downloader `
+  "hatsune_miku" `
+  --rating general `
+  --order popular `
+  --limit 20 `
+  --output /datasets/hatsune_miku
+```
+
+取得後、GUIで`/workspace/datasets/hatsune_miku`を選択します。認証、rating、並び順などは[ツールのREADME](tools/danbooru-dataset-downloader/README.md)を参照してください。
+
 ## GPUとprecision
 
 `MIXED_PRECISION=auto`ではGPU capabilityを調べ、RTX 2060などTuring世代では`fp16`、対応する新しいGPUでは`bf16`を選択します。問題の切り分けが必要な場合だけ、`.env`で`fp16`または`bf16`を明示してください。

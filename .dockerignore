@@ -3,6 +3,7 @@
 .env
 data
 tests
+tools
 __pycache__
 *.pyc
 Anima-LoRA-Factory-v4.0.zip

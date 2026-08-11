@@ -1,6 +1,17 @@
 name: anima-lora-factory
 
 services:
+  dataset-downloader:
+    profiles: ["tools"]
+    image: anima-danbooru-dataset-downloader:latest
+    build:
+      context: ./tools/danbooru-dataset-downloader
+    environment:
+      DANBOORU_USERNAME: ${DANBOORU_USERNAME:-}
+      DANBOORU_API_KEY: ${DANBOORU_API_KEY:-}
+      DANBOORU_USER_AGENT: ${DANBOORU_USER_AGENT:-anima-lora-factory-dataset-downloader/1.0}
+    volumes:
+      - "${DATASETS_DIR:-./data/datasets}:/datasets"
   app:
     image: anima-lora-factory:cuda12.8
     build:
