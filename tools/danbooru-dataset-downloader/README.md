@@ -11,7 +11,7 @@ docker compose --profile tools run --rm dataset-downloader `
   "hatsune_miku" `
   --rating general `
   --order popular `
-  --limit 20 `
+  --image-count 20 `
   --output /datasets/hatsune_miku
 ```
 
@@ -33,7 +33,8 @@ docker compose --profile tools run --rm dataset-downloader `
   "1girl" "solo" `
   --rating g `
   --order favorites `
-  --limit 50 `
+  --exclude-tags comic monochrome watermark `
+  --image-count 50 `
   --output /datasets/solo
 ```
 
@@ -70,17 +71,20 @@ docker build -t anima-danbooru-dataset-downloader ./tools/danbooru-dataset-downl
 docker run --rm `
   -v "C:/AI/Anima/datasets:/datasets" `
   anima-danbooru-dataset-downloader `
-  "hatsune_miku" --rating g --limit 20 --output /datasets/hatsune_miku
+  "hatsune_miku" --rating g --image-count 20 --output /datasets/hatsune_miku
 ```
 
 ## 主なオプション
 
-- `-n`, `--limit`: 取得する投稿数
+- `--image-count`: 除外後に保存先で利用可能にする画像数。既定値は20
+- `--exclude-tags TAG [TAG ...]`: いずれかのタグを含む投稿を除外。繰り返し指定可能
 - `-o`, `--output`: 保存先。既定値は`/datasets`
 - `--skip-existing`: 既存画像を再取得しない
 - `--sleep`: API・画像取得間隔
 - `--page-size`: 1回のAPI取得件数
 - `--include-deleted`: 削除済み投稿も検索対象に含める
+
+`--exclude-tags`は投稿のDanbooruタグと完全一致で比較します。除外投稿や画像URLがない投稿は画像数に含めず、`--image-count`へ達するまで検索結果の次ページを取得します。`--skip-existing`で再取得しなかった既存画像は、利用可能な画像として数えます。
 
 ## 利用上の注意
 

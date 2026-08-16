@@ -63,7 +63,7 @@ docker compose --profile tools run --rm dataset-downloader `
   "hatsune_miku" `
   --rating general `
   --order popular `
-  --limit 20 `
+  --image-count 20 `
   --output /datasets/hatsune_miku
 ```
 

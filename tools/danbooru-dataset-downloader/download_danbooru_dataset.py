@@ -61,11 +61,18 @@ def parse_args() -> argparse.Namespace:
         help='Danbooru tags or metatags, for example: "hatsune_miku rating:g".',
     )
     parser.add_argument(
-        "-n",
-        "--limit",
+        "--image-count",
         type=int,
         default=20,
-        help="Number of posts to fetch. Default: 20.",
+        help="Number of usable images to save. Default: 20.",
+    )
+    parser.add_argument(
+        "--exclude-tags",
+        nargs="+",
+        action="extend",
+        default=[],
+        metavar="TAG",
+        help="Exclude posts containing any of these Danbooru tags.",
     )
     parser.add_argument(
         "-r",
@@ -135,8 +142,10 @@ def parse_args() -> argparse.Namespace:
     )
     args = parser.parse_args()
 
-    if args.limit < 1:
-        parser.error("--limit must be at least 1")
+    if args.image_count < 1:
+        parser.error("--image-count must be at least 1")
+    if any(not tag.strip() for tag in args.exclude_tags):
+        parser.error("--exclude-tags must not contain empty tags")
     if not 1 <= args.page_size <= 200:
         parser.error("--page-size must be between 1 and 200")
     if args.sleep < 0:
@@ -181,12 +190,21 @@ def build_search_tags(raw_tags: list[str], rating: str | None, order: str, inclu
     return tags
 
 
-def search_summary(raw_tags: list[str], effective_tags: str, rating: str | None, order: str) -> dict[str, Any]:
+def search_summary(
+    raw_tags: list[str],
+    effective_tags: str,
+    rating: str | None,
+    order: str,
+    exclude_tags: list[str] | None = None,
+    image_count: int | None = None,
+) -> dict[str, Any]:
     order_value, order_label = ORDER_ALIASES[order]
     effective_order = metatag_value(effective_tags, "order") or order_value
     effective_rating = metatag_value(effective_tags, "rating")
     return {
         "requested_tags": raw_tags,
+        "excluded_tags": exclude_tags or [],
+        "requested_image_count": image_count,
         "effective_query": effective_tags,
         "rating": {
             "argument": rating,
@@ -268,21 +286,22 @@ def build_headers(user_agent: str, auth_header: str | None) -> dict[str, str]:
 def fetch_posts(
     api_base_url: str,
     tags: str,
-    limit: int,
+    image_count: int,
     page_size: int,
     sleep_seconds: float,
     user_agent: str,
     auth_header: str | None,
+    exclude_tags: set[str] | None = None,
 ) -> list[dict[str, Any]]:
     posts: list[dict[str, Any]] = []
+    excluded_tags = {tag.strip().lower() for tag in (exclude_tags or set())}
     page = "1"
     page_number = 1
     order_value = metatag_value(tags, "order")
     use_id_cursor = order_value in (None, "id_desc")
 
-    while len(posts) < limit:
-        batch_limit = min(page_size, limit - len(posts))
-        params = urlencode({"tags": tags, "limit": batch_limit, "page": page})
+    while len(posts) < image_count:
+        params = urlencode({"tags": tags, "limit": page_size, "page": page})
         url = f"{api_base_url.rstrip('/')}/posts.json?{params}"
         batch = request_json(url, user_agent, auth_header)
 
@@ -291,7 +310,13 @@ def fetch_posts(
         if not batch:
             break
 
-        posts.extend(batch)
+        for post in batch:
+            if has_excluded_tag(post, excluded_tags) or post_file_url(post) is None:
+                continue
+            posts.append(post)
+            if len(posts) >= image_count:
+                break
+
         if use_id_cursor:
             last_id = batch[-1].get("id")
             if not isinstance(last_id, int):
@@ -301,7 +326,7 @@ def fetch_posts(
             page_number += 1
             page = str(page_number)
 
-        if len(posts) < limit:
+        if len(posts) < image_count:
             time.sleep(sleep_seconds)
 
     return posts
@@ -313,6 +338,29 @@ def post_file_url(post: dict[str, Any]) -> str | None:
         if isinstance(value, str) and value:
             return value
     return None
+
+
+def tags_from_post(post: dict[str, Any]) -> set[str]:
+    tag_string = post.get("tag_string")
+    if isinstance(tag_string, str) and tag_string.strip():
+        return {tag.lower() for tag in tag_string.split()}
+
+    tags: set[str] = set()
+    for key in (
+        "tag_string_artist",
+        "tag_string_character",
+        "tag_string_copyright",
+        "tag_string_general",
+        "tag_string_meta",
+    ):
+        value = post.get(key)
+        if isinstance(value, str):
+            tags.update(tag.lower() for tag in value.split())
+    return tags
+
+
+def has_excluded_tag(post: dict[str, Any], exclude_tags: set[str]) -> bool:
+    return bool(exclude_tags.intersection(tags_from_post(post)))
 
 
 def file_extension(url: str, post: dict[str, Any]) -> str:
@@ -389,11 +437,19 @@ def save_post_files(
 def main() -> int:
     args = parse_args()
     tags = build_search_tags(args.tags, args.rating, args.order, args.include_deleted)
+    exclude_tags = list(dict.fromkeys(tag.strip().lower() for tag in args.exclude_tags))
 
     output_dir = Path(args.output)
     output_dir.mkdir(parents=True, exist_ok=True)
     auth_header = build_auth_header(args.username, args.api_key)
-    summary = search_summary(args.tags, tags, args.rating, args.order)
+    summary = search_summary(
+        args.tags,
+        tags,
+        args.rating,
+        args.order,
+        exclude_tags,
+        args.image_count,
+    )
     (output_dir / "search_summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -402,16 +458,19 @@ def main() -> int:
     print(f"Order: {summary['order']['description']} ({summary['order']['danbooru_value']})")
     if summary["rating"]["danbooru_value"]:
         print(f"Rating: {summary['rating']['danbooru_value']}")
+    if exclude_tags:
+        print(f"Excluded tags: {', '.join(exclude_tags)}")
 
     try:
         posts = fetch_posts(
             api_base_url=args.api_base_url,
             tags=tags,
-            limit=args.limit,
+            image_count=args.image_count,
             page_size=args.page_size,
             sleep_seconds=args.sleep,
             user_agent=args.user_agent,
             auth_header=auth_header,
+            exclude_tags=set(exclude_tags),
         )
 
         if not posts:
@@ -426,7 +485,13 @@ def main() -> int:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 
-    print(f"Saved {len(posts)} post(s) to {output_dir}")
+    if len(posts) < args.image_count:
+        print(
+            f"Warning: only {len(posts)} usable image(s) were found; "
+            f"requested {args.image_count}.",
+            file=sys.stderr,
+        )
+    print(f"Saved {len(posts)} usable image(s) to {output_dir}")
     return 0
 
 
