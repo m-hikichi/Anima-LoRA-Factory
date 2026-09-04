@@ -26,6 +26,13 @@ class MaterializeTests(unittest.TestCase):
             self.assertNotIn("tk.Tk()", content)
             html = (output / "frontend" / "index.html").read_text(encoding="utf-8")
             self.assertIn("file_browser.js", html)
+            self.assertIn("app.js?v=docker-2", html)
+            javascript = (output / "frontend" / "app.js").read_text(encoding="utf-8")
+            self.assertIn("getApiErrorMessage(data", javascript)
+            training_javascript = javascript.split("async function startTraining()", 1)[1].split(
+                "async function convertToComfy()", 1
+            )[0]
+            self.assertNotIn("Error: ${data.message}", training_javascript)
 
     def test_hash_mismatch_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp_dir:

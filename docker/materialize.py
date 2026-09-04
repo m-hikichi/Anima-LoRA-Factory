@@ -185,10 +185,52 @@ def patch_frontend(app_root: Path) -> None:
     content = replace_once(
         content,
         '<script src="app.js?v=4.6"></script>',
-        '<script src="app.js?v=4.6"></script>\n    <script src="file_browser.js?v=docker-1"></script>',
+        '<script src="app.js?v=docker-2"></script>\n    <script src="file_browser.js?v=docker-1"></script>',
         "frontend script",
     )
     html_path.write_text(content, encoding="utf-8", newline="\n")
+
+    app_path = app_root / "frontend" / "app.js"
+    content = app_path.read_text(encoding="utf-8")
+    content = replace_once(
+        content,
+        "        } else {\n"
+        "            consoleOut.innerHTML += `<span style=\"color: #ef4444;\">Error: ${data.message}</span>`;\n"
+        "        }\n"
+        "    } catch (e) {\n"
+        "        consoleOut.innerHTML += `<span style=\"color: #ef4444;\">Error: ${e.message}</span>`;\n"
+        "    }\n"
+        "}\n\n"
+        "async function convertToComfy()",
+        "        } else {\n"
+        "            appendTrainingError(consoleOut, getApiErrorMessage(data, `Request failed (${response.status})`));\n"
+        "        }\n"
+        "    } catch (e) {\n"
+        "        appendTrainingError(consoleOut, e instanceof Error ? e.message : String(e));\n"
+        "    }\n"
+        "}\n\n"
+        "function getApiErrorMessage(data, fallback = 'Unknown error') {\n"
+        "    if (typeof data?.message === 'string' && data.message) return data.message;\n"
+        "    if (typeof data?.detail === 'string' && data.detail) return data.detail;\n"
+        "    if (Array.isArray(data?.detail)) {\n"
+        "        const messages = data.detail.map(item => {\n"
+        "            const location = Array.isArray(item?.loc) ? item.loc.filter(part => part !== 'body').join('.') : '';\n"
+        "            return `${location ? location + ': ' : ''}${item?.msg || JSON.stringify(item)}`;\n"
+        "        });\n"
+        "        if (messages.length) return messages.join('; ');\n"
+        "    }\n"
+        "    return fallback;\n"
+        "}\n\n"
+        "function appendTrainingError(consoleOut, message) {\n"
+        "    const error = document.createElement('span');\n"
+        "    error.style.color = '#ef4444';\n"
+        "    error.textContent = `Error: ${message}`;\n"
+        "    consoleOut.appendChild(error);\n"
+        "}\n\n"
+        "async function convertToComfy()",
+        "training error handling",
+    )
+    app_path.write_text(content, encoding="utf-8", newline="\n")
 
 
 def materialize(archive: Path, lock_path: Path, output: Path) -> None:

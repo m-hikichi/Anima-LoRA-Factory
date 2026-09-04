@@ -66,12 +66,23 @@ def validate_output_name(name: str) -> str:
 
 
 def validate_training_config(config) -> None:
-    config.path = validate_path(config.path, ("datasets",), "directory")
-    config.model = validate_path(config.model, ("models",), "file")
-    config.vae = validate_path(config.vae, ("models",), "file")
-    config.qwen3 = validate_path(config.qwen3, ("models",), "file")
-    config.output_dir = validate_path(config.output_dir, ("output",), "directory")
-    validate_output_name(config.name)
+    path_fields = (
+        ("path", "Dataset path", ("datasets",), "directory"),
+        ("model", "Base model path", ("models",), "file"),
+        ("vae", "VAE path", ("models",), "file"),
+        ("qwen3", "Qwen3 path", ("models",), "file"),
+        ("output_dir", "Output directory", ("output",), "directory"),
+    )
+    for attribute, label, roots, expected in path_fields:
+        try:
+            value = validate_path(getattr(config, attribute), roots, expected)
+        except PathAccessError as exc:
+            raise PathAccessError(f"{label}: {exc}") from exc
+        setattr(config, attribute, value)
+    try:
+        validate_output_name(config.name)
+    except PathAccessError as exc:
+        raise PathAccessError(f"Output name: {exc}") from exc
     if config.shutdown:
         raise PathAccessError("Host shutdown is unavailable in Docker mode")
 

@@ -71,6 +71,12 @@ class DockerSupportTests(unittest.TestCase):
         docker_support.validate_training_config(config)
         self.assertEqual(config.output_dir, str(self.output.resolve()))
 
+    def test_training_config_identifies_invalid_field(self):
+        config = SimpleNamespace(path="", model="", vae="", qwen3="", output_dir="",
+                                 name="character_v1", shutdown=False)
+        with self.assertRaisesRegex(docker_support.PathAccessError, "Dataset path: Path is required"):
+            docker_support.validate_training_config(config)
+
     def test_output_name_rejects_path_components(self):
         for name in ("../escape", "folder/name", "", "name with spaces"):
             with self.subTest(name=name), self.assertRaises(docker_support.PathAccessError):
