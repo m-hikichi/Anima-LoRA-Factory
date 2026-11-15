@@ -18,12 +18,13 @@ services:
       context: .
       args:
         PYTORCH_IMAGE: pytorch/pytorch:2.11.0-cuda12.8-cudnn9-runtime
-        UPSTREAM_ARCHIVE: Anima-LoRA-Factory-v4.7.zip
+        UPSTREAM_ARCHIVE: Anima-LoRA-Factory-v6.0.zip
     gpus: all
     ports:
       - "127.0.0.1:${APP_PORT:-8000}:8000"
     environment:
       APP_PORT: "8000"
+      APP_HOST: "0.0.0.0"
       ANIMA_DOCKER: "1"
       DATASETS_ROOT: /workspace/datasets
       MODELS_ROOT: /workspace/models

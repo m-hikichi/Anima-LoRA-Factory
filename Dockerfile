@@ -2,7 +2,7 @@
 ARG PYTORCH_IMAGE=pytorch/pytorch:2.11.0-cuda12.8-cudnn9-runtime
 FROM ${PYTORCH_IMAGE}
 
-ARG UPSTREAM_ARCHIVE=Anima-LoRA-Factory-v4.7.zip
+ARG UPSTREAM_ARCHIVE=Anima-LoRA-Factory-v6.0.zip
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \

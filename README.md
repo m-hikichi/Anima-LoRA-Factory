@@ -1,6 +1,6 @@
 # Anima LoRA Factory for Docker
 
-[Anima LoRA Factory](https://github.com/UNfukashigi/Anima-LoRA-Factory) を、NVIDIA GPU対応のDocker Desktopで動かすためのforkです。上流v4.7の配布ZIPを検証・展開し、Linuxコンテナ向けのパス操作とGPU設定を追加します。元プロジェクトの説明と更新履歴は[UPSTREAM_README.md](UPSTREAM_README.md)に保存しています。
+[Anima LoRA Factory](https://github.com/UNfukashigi/Anima-LoRA-Factory) を、NVIDIA GPU対応のDocker Desktopで動かすためのforkです。上流v6.0の配布ZIPを検証・展開し、Linuxコンテナ向けのパス操作とGPU設定を追加します。元プロジェクトの説明と更新履歴は[UPSTREAM_README.md](UPSTREAM_README.md)に保存しています。
 
 ## 必要な環境
 

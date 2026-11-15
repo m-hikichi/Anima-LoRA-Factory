@@ -74,12 +74,10 @@ def patch_backend(app_root: Path) -> None:
     )
     content = replace_once(
         content,
-        "app = FastAPI()\n\n"
         "# Initialize tkinter for folder dialog\n"
         "root = tk.Tk()\n"
         "root.withdraw() # Hide main window\n"
         "root.attributes('-topmost', True) # Bring dialog to front\n",
-        "app = FastAPI()\n"
         "register_routes(app)\n\n"
         "def require_path(path, roots, expected=\"any\", must_exist=True):\n"
         "    try:\n"
@@ -95,8 +93,8 @@ def patch_backend(app_root: Path) -> None:
     )
     content = replace_once(
         content,
-        "    global training_logs, training_process\n    \n",
-        "    global training_logs, training_process\n"
+        "    global training_logs, training_process, training_active, training_stop_requested\n",
+        "    global training_logs, training_process, training_active, training_stop_requested\n"
         "    require_training_config(config)\n    \n",
         "training validation",
     )
@@ -108,7 +106,7 @@ def patch_backend(app_root: Path) -> None:
     )
     content = replace_section(
         content,
-        '@app.get("/api/browse-folder")',
+        'def run_dialog(kind: str, title: str):',
         '@app.get("/api/gpu-info")',
         '@app.get("/api/browse-folder")\n'
         'async def browse_folder():\n'
@@ -184,7 +182,7 @@ def patch_frontend(app_root: Path) -> None:
     )
     content = replace_once(
         content,
-        '<script src="app.js?v=4.6"></script>',
+        '<script src="app.js?v=6.0"></script>',
         '<script src="app.js?v=docker-2"></script>\n    <script src="file_browser.js?v=docker-1"></script>',
         "frontend script",
     )
@@ -201,7 +199,7 @@ def patch_frontend(app_root: Path) -> None:
         "        consoleOut.innerHTML += `<span style=\"color: #ef4444;\">Error: ${e.message}</span>`;\n"
         "    }\n"
         "}\n\n"
-        "async function convertToComfy()",
+        "function setStopButtonVisible(visible) {",
         "        } else {\n"
         "            appendTrainingError(consoleOut, getApiErrorMessage(data, `Request failed (${response.status})`));\n"
         "        }\n"
@@ -227,7 +225,7 @@ def patch_frontend(app_root: Path) -> None:
         "    error.textContent = `Error: ${message}`;\n"
         "    consoleOut.appendChild(error);\n"
         "}\n\n"
-        "async function convertToComfy()",
+        "function setStopButtonVisible(visible) {",
         "training error handling",
     )
     app_path.write_text(content, encoding="utf-8", newline="\n")
